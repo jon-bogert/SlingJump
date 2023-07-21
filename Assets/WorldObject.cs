@@ -2,13 +2,15 @@ using UnityEngine;
 
 public class WorldObject : MonoBehaviour
 {
-    private void OnEnable()
+    private void Start()
     {
         FindObjectOfType<CameraController>().worldObjects.Add(this);
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
-        FindObjectOfType<CameraController>().worldObjects.Remove(this);
+        CameraController camCtrl = FindObjectOfType<CameraController>();
+        if (camCtrl)
+            camCtrl.worldObjects.Remove(this);
     }
 }

@@ -9,9 +9,14 @@ public class Player : MonoBehaviour
     [SerializeField] float _touchZoneRadius = 0.5f;
     [SerializeField] float _maxDragRadius = 1f;
     [SerializeField] float _maxShotForce = 100f;
+    [SerializeField] float _worldHalfWidth = 1f;
+    [SerializeField] float _velocityLineScale = 1f;
+    [SerializeField] float _velocityLineSmoothFactor = 0.5f;
 
     [Header("References")]
     [SerializeField] Transform _touchIndicator;
+    [SerializeField] LineRenderer _touchLineRenderer;
+    [SerializeField] LineRenderer _velocityLineRenderer;
 
     [Header("Inputs")]
     [SerializeField] InputActionReference _inputDown;
@@ -26,7 +31,6 @@ public class Player : MonoBehaviour
     Vector2 _dragVector = Vector2.zero;
 
     //References
-    LineRenderer _lineRenderer;
     Rigidbody2D _rigidbody;
 
     public bool PhysicsActive
@@ -48,23 +52,29 @@ public class Player : MonoBehaviour
     //Unity Calls
     private void Awake()
     {
+        Application.targetFrameRate = 60;
+
         _inputDown.action.performed += OnTouch;
         _inputUp.action.performed += OnRelease;
 
-        _lineRenderer = GetComponentInChildren<LineRenderer>();
-        if (!_lineRenderer)
-            Debug.LogError("Player -> Could not find LineRenderer in Children");
+        if (!_touchLineRenderer)
+            Debug.LogError("Player -> Could not find touch LineRenderer");
+
+        if (!_velocityLineRenderer)
+            Debug.LogError("Player -> Could not find velocity LineRenderer");
 
         _rigidbody = GetComponent<Rigidbody2D>();
     }
     void Start()
     {
         _touchIndicator.gameObject.SetActive(false);
-        _lineRenderer.gameObject.SetActive(false);
+        _touchLineRenderer.gameObject.SetActive(false);
     }
 
     private void Update()
     {
+        UpdateVelocityLine();
+
         if (!_isTouching)
             return;
 
@@ -79,7 +89,32 @@ public class Player : MonoBehaviour
             touchPos = playerPos + _dragVector;
         }
         _touchIndicator.position = touchPos;
-        UpdateLine();
+        UpdateTouchLine();
+    }
+
+    private void FixedUpdate()
+    {
+        if (_rigidbody.position.x < -_worldHalfWidth)
+        {
+            _rigidbody.position = new Vector2(_rigidbody.position.x + _worldHalfWidth * 2f, _rigidbody.position.y);
+            Vector2 trailPos = _velocityLineRenderer.GetPosition(1);
+            _velocityLineRenderer.SetPosition(1, trailPos + _worldHalfWidth * 2f * Vector2.right);
+        }
+        else if (_rigidbody.position.x > _worldHalfWidth)
+        {
+            _rigidbody.position = new Vector2(_rigidbody.position.x - _worldHalfWidth * 2f, _rigidbody.position.y);
+            Vector2 trailPos = _velocityLineRenderer.GetPosition(1);
+            _velocityLineRenderer.SetPosition(1, trailPos + _worldHalfWidth * 2f * Vector2.left);
+        }
+    }
+
+    private void OnDrawGizmosSelected()
+    {
+#if UNITY_EDITOR
+        UnityEditor.Handles.color = Color.cyan;
+        Vector2 pos = transform.position;
+        UnityEditor.Handles.DrawLine(pos + _worldHalfWidth * Vector2.left, pos + _worldHalfWidth * Vector2.right);
+#endif
     }
 
     private void OnDestroy()
@@ -90,10 +125,32 @@ public class Player : MonoBehaviour
 
     //Methods
 
-    void UpdateLine()
+    void UpdateVelocityLine()
     {
-        _lineRenderer.SetPosition(0, transform.position);
-        _lineRenderer.SetPosition(1, _touchIndicator.position);
+        Vector2 pos = _rigidbody.position;
+        Vector2 desiredPos = pos - _rigidbody.velocity * _velocityLineScale;
+        Vector2 accel = Vector2.zero; // throwaway var
+        Vector2 finalPos = Vector2.SmoothDamp(_velocityLineRenderer.GetPosition(1), desiredPos, ref accel, _velocityLineSmoothFactor);
+        _velocityLineRenderer.SetPosition(0, pos);
+        _velocityLineRenderer.SetPosition(1, finalPos);
+    }
+
+    void UpdateTouchLine()
+    {
+        _touchLineRenderer.SetPosition(0, transform.position);
+        _touchLineRenderer.SetPosition(1, _touchIndicator.position);
+    }
+
+    public void GameOver()
+    {
+        Debug.Log("Game Over!");
+    }
+
+    public void TeleportY(float amt)
+    {
+        _rigidbody.position = new Vector2(_rigidbody.position.x, _rigidbody.position.y + amt);
+        Vector2 trailPos = _velocityLineRenderer.GetPosition(1);
+        _velocityLineRenderer.SetPosition(1, trailPos + amt * Vector2.up);
     }
 
     //Callback Events
@@ -109,8 +166,8 @@ public class Player : MonoBehaviour
 
         _isTouching = true;
         _touchIndicator.gameObject.SetActive(true);
-        _lineRenderer.gameObject.SetActive(true);
-        UpdateLine();
+        _touchLineRenderer.gameObject.SetActive(true);
+        UpdateTouchLine();
 
     }
 
@@ -120,11 +177,11 @@ public class Player : MonoBehaviour
             return;
 
         _touchIndicator.gameObject.SetActive(false);
-        _lineRenderer.gameObject.SetActive(false);
+        _touchLineRenderer.gameObject.SetActive(false);
 
         Vector2 forceNormal = -_dragVector.normalized;
         float forceMagnitude = (_dragVector.magnitude / _maxDragRadius) * _maxShotForce;
-
+        PhysicsActive = true;
         _rigidbody.AddForce(forceNormal * forceMagnitude);
 
         _isTouching = false;

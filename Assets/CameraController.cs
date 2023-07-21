@@ -12,11 +12,11 @@ public class CameraController : MonoBehaviour
     [HideInInspector]
     public List<WorldObject> worldObjects;
 
-    GameObject _player;
+    Player _player;
 
     private void Start()
     {
-        _player = FindObjectOfType<Player>().gameObject;
+        _player = FindObjectOfType<Player>();
     }
 
     private void Update()
@@ -41,8 +41,7 @@ public class CameraController : MonoBehaviour
                     objPos.y - _resetDistance * 2f,
                     objPos.z);
             }
+            _player.TeleportY(-_resetDistance * 2f);
         }
-
-
     }
 }

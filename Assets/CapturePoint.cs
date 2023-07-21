@@ -6,14 +6,18 @@ public class CapturePoint : MonoBehaviour
     [SerializeField] float _captureTime = 0.1f;
 
     Player _capturedPlayer = null;
+    ScoreManager _scoreManager;
 
     bool _isLerping = false;
     float _lerpTimer = 0f;
     float _lerpTimerMultiplier = 1f;
     Vector2 _lerpStart = Vector2.zero;
 
+    public bool pointSpent { get; set; } = false;
+
     private void Start()
     {
+        _scoreManager = FindObjectOfType<ScoreManager>();
         _lerpTimerMultiplier = 1f / _captureTime;
     }
 
@@ -32,7 +36,7 @@ public class CapturePoint : MonoBehaviour
             _isLerping = false;
             _capturedPlayer.transform.position = transform.position;
             _capturedPlayer.canGrab = true;
-            _capturedPlayer.PhysicsActive = true;
+            //_capturedPlayer.PhysicsActive = true;
         }
     }
 
@@ -48,6 +52,12 @@ public class CapturePoint : MonoBehaviour
         _isLerping = true;
         _lerpStart = _capturedPlayer.transform.position;
         _lerpTimer = 0f;
+
+        if (!pointSpent)
+        {
+            _scoreManager.score++;
+            pointSpent = true;
+        }
     }
 
     private void OnTriggerExit2D(Collider2D collision)
