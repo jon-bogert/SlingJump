@@ -18,6 +18,7 @@ public class Player : MonoBehaviour
     [SerializeField] Transform _touchIndicator;
     [SerializeField] LineRenderer _touchLineRenderer;
     [SerializeField] LineRenderer _velocityLineRenderer;
+    [SerializeField] LineRenderer _directionLineRenderer;
 
     [Header("Inputs")]
     [SerializeField] InputActionReference _inputDown;
@@ -30,6 +31,7 @@ public class Player : MonoBehaviour
     public bool canGrab { get { return _canGrab; } set { _canGrab = value; } }
 
     Vector2 _dragVector = Vector2.zero;
+    Vector2 _startPos = Vector2.zero;
 
     //References
     Rigidbody2D _rigidbody;
@@ -71,6 +73,7 @@ public class Player : MonoBehaviour
     {
         _touchIndicator.gameObject.SetActive(false);
         _touchLineRenderer.gameObject.SetActive(false);
+        _directionLineRenderer.gameObject.SetActive(false);
         _scoreManager = ScoreManager.instance;
     }
 
@@ -82,14 +85,13 @@ public class Player : MonoBehaviour
             return;
 
         Vector2 touchPos = Camera.main.ScreenToWorldPoint(_inputPosition.action.ReadValue<Vector2>());
-        Vector2 playerPos = transform.position;
-        _dragVector = touchPos - playerPos;
+        _dragVector = touchPos - _startPos;
 
         // test if outside max drag distance and correct
         if (_dragVector.sqrMagnitude > Mathf.Pow(_maxDragRadius, 2f))
         {
             _dragVector = _dragVector.normalized * _maxDragRadius;
-            touchPos = playerPos + _dragVector;
+            touchPos = _startPos + _dragVector;
         }
         _touchIndicator.position = touchPos;
         UpdateTouchLine();
@@ -140,8 +142,12 @@ public class Player : MonoBehaviour
 
     void UpdateTouchLine()
     {
-        _touchLineRenderer.SetPosition(0, transform.position);
+        _touchLineRenderer.SetPosition(0, _startPos);
         _touchLineRenderer.SetPosition(1, _touchIndicator.position);
+
+        _directionLineRenderer.SetPosition(0, transform.position);
+        Vector2 playerPos = transform.position;
+        _directionLineRenderer.SetPosition(1, playerPos - _dragVector);
     }
 
     public void GameOver()
@@ -164,13 +170,14 @@ public class Player : MonoBehaviour
             return;
 
         Vector2 pos = Camera.main.ScreenToWorldPoint(_inputPosition.action.ReadValue<Vector2>());
-        Vector2 playerPos = transform.position;
-        if ((pos - playerPos).sqrMagnitude > Mathf.Pow(_touchZoneRadius, 2f)) // Invalid touch
-            return;
+        _startPos = pos;
+
+        Debug.Log("Start Pos: " + _startPos);
 
         _isTouching = true;
         _touchIndicator.gameObject.SetActive(true);
         _touchLineRenderer.gameObject.SetActive(true);
+        _directionLineRenderer.gameObject.SetActive(true);
         UpdateTouchLine();
 
     }
@@ -182,6 +189,7 @@ public class Player : MonoBehaviour
 
         _touchIndicator.gameObject.SetActive(false);
         _touchLineRenderer.gameObject.SetActive(false);
+        _directionLineRenderer.gameObject.SetActive(false);
 
         Vector2 forceNormal = -_dragVector.normalized;
         float forceMagnitude = (_dragVector.magnitude / _maxDragRadius) * _maxShotForce;
@@ -191,5 +199,4 @@ public class Player : MonoBehaviour
         _isTouching = false;
         _canGrab = false;
     }
-
 }
