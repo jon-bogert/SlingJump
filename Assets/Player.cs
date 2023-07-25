@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class Player : MonoBehaviour
@@ -143,7 +144,7 @@ public class Player : MonoBehaviour
 
     public void GameOver()
     {
-        Debug.Log("Game Over!");
+        SceneManager.LoadScene("GameOver");
     }
 
     public void TeleportY(float amt)
