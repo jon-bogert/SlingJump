@@ -6,15 +6,6 @@
             "id": "a6348047-df89-4324-8a66-8dcb2b4d8266",
             "actions": [
                 {
-                    "name": "TouchPress",
-                    "type": "Button",
-                    "id": "2be727d1-1e67-4938-a812-304739c54057",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "TouchPosition",
                     "type": "Value",
                     "id": "6227094e-ab6a-420e-8e47-a4decde26f20",
@@ -22,6 +13,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "TouchPress",
+                    "type": "Button",
+                    "id": "2be727d1-1e67-4938-a812-304739c54057",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 },
                 {
                     "name": "TouchRelease",
@@ -47,23 +47,23 @@
                 },
                 {
                     "name": "",
-                    "id": "59f4b4f5-620c-4ee6-81b4-444abd4de294",
-                    "path": "<Touchscreen>/primaryTouch/position",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "TouchPosition",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "535e0baa-f34a-402d-aeec-47d7453f8e4e",
                     "path": "<Touchscreen>/Press",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "TouchRelease",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "59f4b4f5-620c-4ee6-81b4-444abd4de294",
+                    "path": "<Touchscreen>/primaryTouch/position",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "TouchPosition",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

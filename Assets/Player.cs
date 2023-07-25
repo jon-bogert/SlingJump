@@ -57,6 +57,7 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         Application.targetFrameRate = 60;
+        Debug.Log(_inputPosition.action.ReadValue<Vector2>());
 
         _inputDown.action.performed += OnTouch;
         _inputUp.action.performed += OnRelease;
@@ -169,10 +170,10 @@ public class Player : MonoBehaviour
         if (!_canGrab) // Check if ball is at grab point
             return;
 
-        Vector2 pos = Camera.main.ScreenToWorldPoint(_inputPosition.action.ReadValue<Vector2>());
-        _startPos = pos;
+        Debug.Log("Touch");
 
-        Debug.Log("Start Pos: " + _startPos);
+        Vector2 screenPos = _inputPosition.action.ReadValue<Vector2>();
+        _startPos = Camera.main.ScreenToWorldPoint(screenPos);
 
         _isTouching = true;
         _touchIndicator.gameObject.SetActive(true);

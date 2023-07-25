@@ -12,7 +12,8 @@ public class GameOverScore : MonoBehaviour
     {
         _scoreManager = ScoreManager.instance;
 
-        _currentScore.text = "You Got: " + _scoreManager.score.ToString();
+        if (_currentScore)
+            _currentScore.text = "You Got: " + _scoreManager.score.ToString();
 
         _highScores.text =
             "1.\t" + HighScoreStr(0) + "\n" +
