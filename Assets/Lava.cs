@@ -17,4 +17,10 @@ public class Lava : MonoBehaviour
         if (player)
             player.GameOver();
     }
+
+    //For Testing On Device only
+    public void DebugToggleLava()
+    {
+        dewit = !dewit;
+    }
 }

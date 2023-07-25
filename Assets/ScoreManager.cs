@@ -10,6 +10,10 @@ public struct ScoreData
 
 public class ScoreManager : MonoBehaviour
 {
+    public static ScoreManager instance;
+
+    ScoreManager() { }
+
     public delegate void ScoreEvent(ulong score);
 
     public ScoreEvent scoreUpdated;
@@ -20,10 +24,13 @@ public class ScoreManager : MonoBehaviour
     private void Awake()
     {
         //Unity-style Singleton
-        if (FindObjectsOfType<ScoreManager>().Length > 1)
+        if (instance)
             Destroy(gameObject);
         else
-            DontDestroyOnLoad(this);
+        {
+            DontDestroyOnLoad(gameObject);
+            instance = this;
+        }
     }
 
     public ulong score

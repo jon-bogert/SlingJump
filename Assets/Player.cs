@@ -33,6 +33,7 @@ public class Player : MonoBehaviour
 
     //References
     Rigidbody2D _rigidbody;
+    ScoreManager _scoreManager;
 
     public bool PhysicsActive
     {
@@ -70,6 +71,7 @@ public class Player : MonoBehaviour
     {
         _touchIndicator.gameObject.SetActive(false);
         _touchLineRenderer.gameObject.SetActive(false);
+        _scoreManager = ScoreManager.instance;
     }
 
     private void Update()
@@ -144,6 +146,7 @@ public class Player : MonoBehaviour
 
     public void GameOver()
     {
+        _scoreManager.CheckScore(_scoreManager.score);
         SceneManager.LoadScene("GameOver");
     }
 

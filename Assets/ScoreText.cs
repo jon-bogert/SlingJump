@@ -21,7 +21,7 @@ public class ScoreText : MonoBehaviour
 
     private void Start()
     {
-        _scoreManager = FindObjectOfType<ScoreManager>();
+        _scoreManager = ScoreManager.instance;
         _scoreManager.scoreUpdated += OnScoreUpdate;
         OnScoreUpdate(0);
     }

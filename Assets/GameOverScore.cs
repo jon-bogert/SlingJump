@@ -10,7 +10,7 @@ public class GameOverScore : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        _scoreManager = FindObjectOfType<ScoreManager>();
+        _scoreManager = ScoreManager.instance;
 
         _currentScore.text = "You Got: " + _scoreManager.score.ToString();
 
