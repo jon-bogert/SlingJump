@@ -17,7 +17,7 @@ public class CapturePoint : MonoBehaviour
 
     private void Start()
     {
-        _scoreManager = FindObjectOfType<ScoreManager>();
+        _scoreManager = ScoreManager.instance;
         _lerpTimerMultiplier = 1f / _captureTime;
     }
 

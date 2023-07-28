@@ -7,7 +7,6 @@ public class Player : MonoBehaviour
 {
     //Inspector
     [Header("Parameters")]
-    [SerializeField] float _touchZoneRadius = 0.5f;
     [SerializeField] float _maxDragRadius = 1f;
     [SerializeField] float _maxShotForce = 100f;
     [SerializeField] float _worldHalfWidth = 1f;
@@ -19,6 +18,7 @@ public class Player : MonoBehaviour
     [SerializeField] LineRenderer _touchLineRenderer;
     [SerializeField] LineRenderer _velocityLineRenderer;
     [SerializeField] LineRenderer _directionLineRenderer;
+    [SerializeField] SpriteRenderer _ringSprite;
 
     [Header("Inputs")]
     [SerializeField] InputActionReference _inputDown;
@@ -28,6 +28,7 @@ public class Player : MonoBehaviour
     //Data
     bool _isTouching = false;
     bool _canGrab = true;
+    bool _isFirst = true;
     public bool canGrab { get { return _canGrab; } set { _canGrab = value; } }
 
     Vector2 _dragVector = Vector2.zero;
@@ -36,6 +37,7 @@ public class Player : MonoBehaviour
     //References
     Rigidbody2D _rigidbody;
     ScoreManager _scoreManager;
+    Lava _lava;
 
     public bool PhysicsActive
     {
@@ -57,7 +59,6 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         Application.targetFrameRate = 60;
-        Debug.Log(_inputPosition.action.ReadValue<Vector2>());
 
         _inputDown.action.performed += OnTouch;
         _inputUp.action.performed += OnRelease;
@@ -69,13 +70,16 @@ public class Player : MonoBehaviour
             Debug.LogError("Player -> Could not find velocity LineRenderer");
 
         _rigidbody = GetComponent<Rigidbody2D>();
+        PhysicsActive = false;
     }
     void Start()
     {
         _touchIndicator.gameObject.SetActive(false);
         _touchLineRenderer.gameObject.SetActive(false);
+        _ringSprite.gameObject.SetActive(false);
         _directionLineRenderer.gameObject.SetActive(false);
         _scoreManager = ScoreManager.instance;
+        _lava = FindObjectOfType<Lava>();
     }
 
     private void Update()
@@ -170,14 +174,14 @@ public class Player : MonoBehaviour
         if (!_canGrab) // Check if ball is at grab point
             return;
 
-        Debug.Log("Touch");
-
         Vector2 screenPos = _inputPosition.action.ReadValue<Vector2>();
         _startPos = Camera.main.ScreenToWorldPoint(screenPos);
 
         _isTouching = true;
         _touchIndicator.gameObject.SetActive(true);
         _touchLineRenderer.gameObject.SetActive(true);
+        _ringSprite.gameObject.SetActive(true);
+        _ringSprite.transform.position = _startPos;
         _directionLineRenderer.gameObject.SetActive(true);
         UpdateTouchLine();
 
@@ -188,8 +192,15 @@ public class Player : MonoBehaviour
         if (!_isTouching)
             return;
 
+        if (_isFirst)
+        {
+            _lava.Dewit();
+            _isFirst = false;
+        }
+
         _touchIndicator.gameObject.SetActive(false);
         _touchLineRenderer.gameObject.SetActive(false);
+        _ringSprite.gameObject.SetActive(false);
         _directionLineRenderer.gameObject.SetActive(false);
 
         Vector2 forceNormal = -_dragVector.normalized;

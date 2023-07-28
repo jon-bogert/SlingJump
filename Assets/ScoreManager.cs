@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using UnityEngine;
 
 [System.Serializable]
@@ -10,6 +11,8 @@ public struct ScoreData
 
 public class ScoreManager : MonoBehaviour
 {
+    [SerializeField] bool _isSaving = true;
+
     public static ScoreManager instance;
 
     ScoreManager() { }
@@ -20,6 +23,7 @@ public class ScoreManager : MonoBehaviour
 
     ulong _score;
     ScoreData[] _highScores = new ScoreData[5];
+    const string fileName = "/save.dat";
 
     private void Awake()
     {
@@ -30,6 +34,7 @@ public class ScoreManager : MonoBehaviour
         {
             DontDestroyOnLoad(gameObject);
             instance = this;
+            LoadData();
         }
     }
 
@@ -72,5 +77,77 @@ public class ScoreManager : MonoBehaviour
         newData.score = scoreToCheck;
         newData.date = DateTime.Now.ToString("yyyy/MM/dd");
         _highScores[insert] = newData;
+        SaveData();
     }
+
+    void LoadData()
+    {
+        if (!_isSaving)
+            return;
+
+        if (!File.Exists(Application.persistentDataPath + fileName)) // No Data Exists
+            return;
+
+        try
+        {
+            int index = 0;
+            using (FileStream fstream = new FileStream(Application.persistentDataPath + fileName, FileMode.Open))
+            {
+                using (BinaryReader reader = new BinaryReader(fstream))
+                {
+                    while (reader.PeekChar() != -1)
+                    {
+                        ScoreData data = new ScoreData();
+
+                        data.score = reader.ReadUInt64();
+                        ushort year = reader.ReadUInt16();
+                        ushort month = reader.ReadUInt16();
+                        ushort day = reader.ReadUInt16();
+                        data.date = year.ToString("D4") + "-" + month.ToString("D2") + "-" + day.ToString("D2");
+
+                        _highScores[index++] = data;
+                    }
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            Debug.LogError(ex.Message);
+        }
+    }
+
+    void SaveData()
+    {
+        if (!_isSaving)
+            return;
+
+        if (!File.Exists(Application.persistentDataPath + fileName)) // create file if doesn't Exist
+        {
+            File.Create(Application.persistentDataPath + fileName).Close();
+        }
+        try
+        {
+            using (FileStream fstream = new FileStream(Application.persistentDataPath + fileName, FileMode.Truncate))
+            {
+                using (BinaryWriter writer = new BinaryWriter(fstream))
+                {
+                    foreach (ScoreData data in _highScores)
+                    {
+                        if (data.score == 0) // don't write if no score
+                            continue;
+
+                        writer.Write(data.score);
+                        writer.Write(ushort.Parse(data.date.Substring(0, 4)));
+                        writer.Write(ushort.Parse(data.date.Substring(5, 2)));
+                        writer.Write(ushort.Parse(data.date.Substring(8, 2)));
+                    }
+                }
+            }
+        }
+        catch(Exception ex)
+        {
+            Debug.LogError(ex.ToString());
+        }
+    }
+
 }

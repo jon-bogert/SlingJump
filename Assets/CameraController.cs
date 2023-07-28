@@ -8,6 +8,7 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     [SerializeField] float _resetDistance = 100f;
+    [SerializeField] bool _doReset = true;
 
     [HideInInspector]
     public List<WorldObject> worldObjects;
@@ -26,6 +27,9 @@ public class CameraController : MonoBehaviour
             _player.transform.position.y,
             Camera.main.transform.position.z);
 
+        if (!_doReset)
+            return;
+
         if (Camera.main.transform.position.y >= _resetDistance)
         {
             Camera.main.transform.position = new Vector3(
@@ -40,6 +44,7 @@ public class CameraController : MonoBehaviour
                     objPos.x,
                     objPos.y - _resetDistance * 2f,
                     objPos.z);
+                worldObjects[i].Invoke(_resetDistance);
             }
             _player.TeleportY(-_resetDistance * 2f);
         }
