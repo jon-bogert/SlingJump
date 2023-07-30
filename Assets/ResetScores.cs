@@ -3,19 +3,22 @@ using UnityEngine.InputSystem;
 
 public class ResetScores : MonoBehaviour
 {
-    [SerializeField] InputActionReference resetTap;
-
     private void Awake()
     {
-        resetTap.action.performed += ResetScore;
+        Disable();
     }
 
-    private void OnDestroy()
+    public void Enable()
     {
-        resetTap.action.performed -= ResetScore;
+        gameObject.SetActive(true);
     }
 
-    void ResetScore(InputAction.CallbackContext ctx)
+    public void Disable()
+    {
+        gameObject.SetActive(false);
+    }
+
+    public void ResetScore()
     {
         ScoreManager.instance.ResetAll();
         FindObjectOfType<GameOverScore>().UpdateHighScoreText();
