@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.Design;
 using System.IO;
 using UnityEngine;
 
@@ -63,6 +64,10 @@ public class ScoreManager : MonoBehaviour
             if (scoreToCheck > _highScores[i].score)
             {
                 insert = i;
+                break;
+            }
+            else if (scoreToCheck == _highScores[i].score) // Don't insert equal scores
+            {
                 break;
             }
         }
