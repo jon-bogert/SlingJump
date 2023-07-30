@@ -53,7 +53,8 @@ public class ScoreManager : MonoBehaviour
     public ulong highScore { get { return _highScores[0].score; } }
 
     /// <summary>
-    /// Checks score against all in the high score array and inserts it of appropriate
+    /// Checks score against all in the high score array and inse
+    /// rts it of appropriate
     /// </summary>
     /// <param name="scoreToCheck"></param>
     public void CheckScore(ulong scoreToCheck)
@@ -153,6 +154,12 @@ public class ScoreManager : MonoBehaviour
         {
             Debug.LogError(ex.ToString());
         }
+    }
+
+    public void ResetAll()
+    {
+        _highScores = new ScoreData[5];
+        SaveData();
     }
 
 }

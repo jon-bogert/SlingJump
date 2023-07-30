@@ -15,12 +15,7 @@ public class GameOverScore : MonoBehaviour
         if (_currentScore)
             _currentScore.text = "You Got: " + _scoreManager.score.ToString();
 
-        _highScores.text =
-            "1.\t" + HighScoreStr(0) + "\n" +
-            "2.\t" + HighScoreStr(1) + "\n" +
-            "3.\t" + HighScoreStr(2) + "\n" +
-            "4.\t" + HighScoreStr(3) + "\n" +
-            "5.\t" + HighScoreStr(4);
+        UpdateHighScoreText();
     }
 
     string HighScoreStr(int index)
@@ -29,5 +24,15 @@ public class GameOverScore : MonoBehaviour
             return "---";
 
         return _scoreManager.highScores[index].score.ToString() + "\t" + _scoreManager.highScores[index].date;
+    }
+
+    public void UpdateHighScoreText()
+    {
+        _highScores.text =
+            "1.\t" + HighScoreStr(0) + "\n" +
+            "2.\t" + HighScoreStr(1) + "\n" +
+            "3.\t" + HighScoreStr(2) + "\n" +
+            "4.\t" + HighScoreStr(3) + "\n" +
+            "5.\t" + HighScoreStr(4);
     }
 }
