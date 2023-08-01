@@ -1,6 +1,6 @@
 using System;
-using System.ComponentModel.Design;
 using System.IO;
+using System.Net;
 using UnityEngine;
 
 [System.Serializable]
@@ -23,8 +23,12 @@ public class ScoreManager : MonoBehaviour
     public ScoreEvent scoreUpdated;
 
     ulong _score;
+    ushort _lives = 15;
     ScoreData[] _highScores = new ScoreData[5];
     const string fileName = "/save.dat";
+
+    public ushort lives { get { return _lives; } }
+    public bool CanPlay { get { return _lives >= 0; } }
 
     private void Awake()
     {
@@ -36,6 +40,15 @@ public class ScoreManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             instance = this;
             LoadData();
+            CheckDateTime();
+        }
+    }
+
+    private void OnApplicationFocus(bool focus)
+    {
+        if (!focus)
+        {
+            CheckDateTime();
         }
     }
 
@@ -91,7 +104,7 @@ public class ScoreManager : MonoBehaviour
         if (!_isSaving)
             return;
 
-        if (!File.Exists(Application.persistentDataPath + fileName)) // No Data Exists
+        if (!System.IO.File.Exists(Application.persistentDataPath + fileName)) // No Data Exists
             return;
 
         try
@@ -127,9 +140,9 @@ public class ScoreManager : MonoBehaviour
         if (!_isSaving)
             return;
 
-        if (!File.Exists(Application.persistentDataPath + fileName)) // create file if doesn't Exist
+        if (!System.IO.File.Exists(Application.persistentDataPath + fileName)) // create file if doesn't Exist
         {
-            File.Create(Application.persistentDataPath + fileName).Close();
+            System.IO.File.Create(Application.persistentDataPath + fileName).Close();
         }
         try
         {
@@ -160,6 +173,32 @@ public class ScoreManager : MonoBehaviour
     {
         _highScores = new ScoreData[5];
         SaveData();
+    }
+    public void ResetLives()
+    {
+        _lives = 15;
+    }
+
+    public void AddLives(ushort amt)
+    {
+        _lives += amt;
+    }
+
+    bool CheckDateTime()
+    {
+        if (!IsConnectedToInternet())
+            return false;
+        // Check Whether past next time to play (return true if successful)
+        HttpWebRequest req = WebRequest.CreateHttp("https://worldtimeapi.org/api/timezone/Europe");
+        //req.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => certificate.GetCertHashString() == "<real_Hash_here>";
+        var response = req.GetResponse();
+        Debug.Log(req);
+        return false;
+    }
+
+    public bool IsConnectedToInternet()
+    {
+        return false;
     }
 
 }
