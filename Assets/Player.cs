@@ -157,6 +157,7 @@ public class Player : MonoBehaviour
 
     public void GameOver()
     {
+        AdsManager.instance.ShowInterstitialAd();
         _scoreManager.CheckScore(_scoreManager.score);
         SceneManager.LoadScene("GameOver");
     }

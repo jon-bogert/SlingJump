@@ -10,12 +10,17 @@ public class GameOverScore : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        AdsManager.instance.ShowBannerAd();
         _scoreManager = ScoreManager.instance;
 
         if (_currentScore)
             _currentScore.text = "You Got: " + _scoreManager.score.ToString();
 
         UpdateHighScoreText();
+    }
+    private void OnDestroy()
+    {
+        AdsManager.instance.HideBanner();
     }
 
     string HighScoreStr(int index)
