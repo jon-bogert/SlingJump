@@ -1,6 +1,8 @@
+using Newtonsoft.Json.Linq;
 using System;
+using System.Globalization;
 using System.IO;
-using System.Net;
+using System.Net.Http;
 using UnityEngine;
 
 [System.Serializable]
@@ -12,23 +14,28 @@ public struct ScoreData
 
 public class ScoreManager : MonoBehaviour
 {
+    const ushort SAVE_VER_NUM = 1;
+
     [SerializeField] bool _isSaving = true;
+    [SerializeField] int _resetTimeHours = 2;
 
     public static ScoreManager instance;
-
     ScoreManager() { }
 
     public delegate void ScoreEvent(ulong score);
-
     public ScoreEvent scoreUpdated;
 
     ulong _score;
     ushort _lives = 15;
+    bool _isConnectedToInternet = true;
+    DateTime _lastTimeRefresh = new DateTime();
+    DateTime _currentTime = new DateTime();
     ScoreData[] _highScores = new ScoreData[5];
     const string fileName = "/save.dat";
 
     public ushort lives { get { return _lives; } }
     public bool CanPlay { get { return _lives >= 0; } }
+    public string TimeToGo { get { return (_isConnectedToInternet) ? (_lastTimeRefresh.AddHours(_resetTimeHours) - _currentTime).ToString().Substring(0, 8) : "-:--:--"; } }
 
     private void Awake()
     {
@@ -52,6 +59,11 @@ public class ScoreManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        _currentTime = _currentTime.AddSeconds(Time.unscaledDeltaTime);
+    }
+
     public ulong score
     {
         get { return _score; }
@@ -69,7 +81,6 @@ public class ScoreManager : MonoBehaviour
     /// Checks score against all in the high score array and inse
     /// rts it of appropriate
     /// </summary>
-    /// <param name="scoreToCheck"></param>
     public void CheckScore(ulong scoreToCheck)
     {
         int insert = -1;
@@ -109,22 +120,26 @@ public class ScoreManager : MonoBehaviour
 
         try
         {
-            int index = 0;
             using (FileStream fstream = new FileStream(Application.persistentDataPath + fileName, FileMode.Open))
             {
                 using (BinaryReader reader = new BinaryReader(fstream))
                 {
-                    while (reader.PeekChar() != -1)
+                    if (reader.PeekChar() != '%')
                     {
-                        ScoreData data = new ScoreData();
+                        LoadVer0(reader);
+                        return;
+                    }
+                    reader.ReadChar();// throw away '%'
 
-                        data.score = reader.ReadUInt64();
-                        ushort year = reader.ReadUInt16();
-                        ushort month = reader.ReadUInt16();
-                        ushort day = reader.ReadUInt16();
-                        data.date = year.ToString("D4") + "-" + month.ToString("D2") + "-" + day.ToString("D2");
-
-                        _highScores[index++] = data;
+                    ushort saveVersion = reader.ReadUInt16();
+                    if (saveVersion == 1)
+                    {
+                        LoadVer1(reader);
+                    }
+                    //Add More Save version as become relevent
+                    else
+                    {
+                        Debug.LogError("ScoreManager -> Unrecognized Save Format");
                     }
                 }
             }
@@ -132,6 +147,41 @@ public class ScoreManager : MonoBehaviour
         catch(Exception ex)
         {
             Debug.LogError(ex.Message);
+        }
+    }
+
+    void LoadVer0(BinaryReader reader)
+    {
+        int index = 0;
+        while (reader.PeekChar() != -1)
+        {
+            ScoreData data = new ScoreData();
+
+            data.score = reader.ReadUInt64();
+            ushort year = reader.ReadUInt16();
+            ushort month = reader.ReadUInt16();
+            ushort day = reader.ReadUInt16();
+            data.date = year.ToString("D4") + "-" + month.ToString("D2") + "-" + day.ToString("D2");
+
+            _highScores[index++] = data;
+        }
+    }
+    void LoadVer1(BinaryReader reader)
+    {
+        _lastTimeRefresh = DateTime.FromBinary(reader.ReadInt64());
+
+        int index = 0;
+        while (reader.PeekChar() != -1)
+        {
+            ScoreData data = new ScoreData();
+
+            data.score = reader.ReadUInt64();
+            ushort year = reader.ReadUInt16();
+            ushort month = reader.ReadUInt16();
+            ushort day = reader.ReadUInt16();
+            data.date = year.ToString("D4") + "-" + month.ToString("D2") + "-" + day.ToString("D2");
+
+            _highScores[index++] = data;
         }
     }
 
@@ -150,6 +200,10 @@ public class ScoreManager : MonoBehaviour
             {
                 using (BinaryWriter writer = new BinaryWriter(fstream))
                 {
+                    writer.Write('%');
+                    writer.Write(SAVE_VER_NUM);
+                    writer.Write(_lastTimeRefresh.ToBinary());
+
                     foreach (ScoreData data in _highScores)
                     {
                         if (data.score == 0) // don't write if no score
@@ -184,21 +238,51 @@ public class ScoreManager : MonoBehaviour
         _lives += amt;
     }
 
-    bool CheckDateTime()
+    void CheckDateTime()
     {
-        if (!IsConnectedToInternet())
-            return false;
-        // Check Whether past next time to play (return true if successful)
-        HttpWebRequest req = WebRequest.CreateHttp("https://worldtimeapi.org/api/timezone/Europe");
-        //req.ServerCertificateValidationCallback += (sender, certificate, chain, errors) => certificate.GetCertHashString() == "<real_Hash_here>";
-        var response = req.GetResponse();
-        Debug.Log(req);
-        return false;
+        DateTimeResult result = DateTimeRequest();
+        switch (result)
+        {
+            case DateTimeResult.NoConnection:
+                //Toggle No Connection Screen
+                _isConnectedToInternet = false;
+                break;
+            case DateTimeResult.NoReset:
+                _isConnectedToInternet = true;
+                break;
+            case DateTimeResult.Reset:
+                _isConnectedToInternet = true;
+                ResetLives();
+                break;
+            default:
+                Debug.LogWarning("No Support for DateTimeResult enum");
+                break;
+        }
     }
 
-    public bool IsConnectedToInternet()
+    private enum DateTimeResult { Reset, NoReset, NoConnection };
+    DateTimeResult DateTimeRequest()
     {
-        return false;
+        string url = $"https://worldtimeapi.org/api/timezone/Europe/London";
+        using (HttpClient httpClient = new HttpClient())
+        {
+            HttpResponseMessage response = httpClient.GetAsync(url).GetAwaiter().GetResult();
+            if (response.IsSuccessStatusCode)
+            {
+                string content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                JObject json = JObject.Parse(content);
+                _currentTime = DateTime.Parse((string)json["datetime"]);
+            }
+            else
+            {
+                return DateTimeResult.NoConnection;
+            }
+        }
+        if (_lastTimeRefresh.AddHours(_resetTimeHours) < _currentTime)
+        {
+            _lastTimeRefresh = _currentTime;
+            return DateTimeResult.Reset;
+        }
+        return DateTimeResult.NoReset;
     }
-
 }

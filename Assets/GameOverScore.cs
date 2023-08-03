@@ -5,6 +5,8 @@ public class GameOverScore : MonoBehaviour
 {
     [SerializeField] TMP_Text _currentScore;
     [SerializeField] TMP_Text _highScores;
+    [SerializeField] TMP_Text _lives;
+    [SerializeField] TMP_Text _livesTimer; // TODO - Update on Update Loop
 
     ScoreManager _scoreManager;
     // Start is called before the first frame update
@@ -17,6 +19,15 @@ public class GameOverScore : MonoBehaviour
             _currentScore.text = "You Got: " + _scoreManager.score.ToString();
 
         UpdateHighScoreText();
+
+        if (_lives)
+            _lives.text = "Lives: " + _scoreManager.lives.ToString();
+    }
+
+    private void Update()
+    {
+        if (_livesTimer)
+            _livesTimer.text = "Lives Reset in " + _scoreManager.TimeToGo;
     }
     private void OnDestroy()
     {
