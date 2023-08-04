@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Net.Http;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 [System.Serializable]
 public struct ScoreData
@@ -62,6 +63,11 @@ public class ScoreManager : MonoBehaviour
     private void Update()
     {
         _currentTime = _currentTime.AddSeconds(Time.unscaledDeltaTime);
+        if (_lastTimeRefresh.AddHours(_resetTimeHours) - _currentTime <= TimeSpan.Zero)
+        {
+            _lastTimeRefresh = _currentTime;
+            ResetLives();
+        }
     }
 
     public ulong score
@@ -97,16 +103,17 @@ public class ScoreManager : MonoBehaviour
             }
         }
 
-        if (insert == -1) return;
-
-        for (int i = _highScores.Length - 1; i > insert; --i)
+        if (insert != -1)
         {
-            _highScores[i] = _highScores[i - 1];
+            for (int i = _highScores.Length - 1; i > insert; --i)
+            {
+                _highScores[i] = _highScores[i - 1];
+            }
+            ScoreData newData = new ScoreData();
+            newData.score = scoreToCheck;
+            newData.date = DateTime.Now.ToString("yyyy/MM/dd");
+            _highScores[insert] = newData;
         }
-        ScoreData newData = new ScoreData();
-        newData.score = scoreToCheck;
-        newData.date = DateTime.Now.ToString("yyyy/MM/dd");
-        _highScores[insert] = newData;
         SaveData();
     }
 
@@ -169,7 +176,7 @@ public class ScoreManager : MonoBehaviour
     void LoadVer1(BinaryReader reader)
     {
         _lastTimeRefresh = DateTime.FromBinary(reader.ReadInt64());
-
+        _lives = reader.ReadUInt16();
         int index = 0;
         while (reader.PeekChar() != -1)
         {
@@ -203,6 +210,7 @@ public class ScoreManager : MonoBehaviour
                     writer.Write('%');
                     writer.Write(SAVE_VER_NUM);
                     writer.Write(_lastTimeRefresh.ToBinary());
+                    writer.Write(_lives);
 
                     foreach (ScoreData data in _highScores)
                     {
@@ -230,12 +238,22 @@ public class ScoreManager : MonoBehaviour
     }
     public void ResetLives()
     {
-        _lives = 15;
+        if (_lives < 15)
+        {
+            _lives = 15;
+            SaveData();
+        }
     }
 
     public void AddLives(ushort amt)
     {
         _lives += amt;
+        SaveData();
+    }
+
+    public void RemoveLife()
+    {
+        _lives -= 1;
     }
 
     void CheckDateTime()

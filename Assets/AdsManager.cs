@@ -36,6 +36,11 @@ public class AdsManager : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsInitial
         Advertisement.Initialize(_adID, _testMode, this);
     }
 
+    private void OnDestroy()
+    {
+        Advertisement.Banner.Hide();
+    }
+
     public void ShowInterstitialAd()
     {
         if (_deathToPlayCouter > 0)
@@ -65,6 +70,8 @@ public class AdsManager : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsInitial
         Advertisement.Banner.Load();
     }
 
+    // Interface Methods
+
     public void OnInitializationComplete()
     {
         Debug.Log("Ads Init Complete");
@@ -93,6 +100,11 @@ public class AdsManager : MonoBehaviour, IUnityAdsLoadListener, IUnityAdsInitial
         if (placementId == _rewardedID && showCompletionState == UnityAdsShowCompletionState.COMPLETED)
         {
             Debug.Log("Reward Ad Complete");
+            AddLivesScreen livesScreen = FindObjectOfType<AddLivesScreen>();
+            if (livesScreen != null)
+            {
+                livesScreen.OnWatchAdComplete();
+            }
         }
         else if (showCompletionState == UnityAdsShowCompletionState.COMPLETED)
         {

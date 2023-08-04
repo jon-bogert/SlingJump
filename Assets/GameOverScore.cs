@@ -19,9 +19,7 @@ public class GameOverScore : MonoBehaviour
             _currentScore.text = "You Got: " + _scoreManager.score.ToString();
 
         UpdateHighScoreText();
-
-        if (_lives)
-            _lives.text = "Lives: " + _scoreManager.lives.ToString();
+        UpdateLivesText();
     }
 
     private void Update()
@@ -50,5 +48,11 @@ public class GameOverScore : MonoBehaviour
             "3.\t" + HighScoreStr(2) + "\n" +
             "4.\t" + HighScoreStr(3) + "\n" +
             "5.\t" + HighScoreStr(4);
+    }
+
+    public void UpdateLivesText()
+    {
+        if (_lives)
+            _lives.text = "Lives: " + _scoreManager.lives.ToString();
     }
 }
